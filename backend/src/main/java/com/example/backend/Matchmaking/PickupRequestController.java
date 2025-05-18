@@ -122,8 +122,8 @@ public class PickupRequestController {
         );
         pickupRequestRepository.deleteById(req.getId());
       } else {
-        foodItemRepository.deleteIfZeroQuantity(req.getFoodItemId());
         pickupRequestRepository.deleteById(req.getId());
+        foodItemRepository.deleteIfZeroQuantity(req.getFoodItemId());
       }
     }
     return ResponseEntity.ok().build();

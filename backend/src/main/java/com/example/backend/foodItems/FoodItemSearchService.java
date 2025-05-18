@@ -198,4 +198,8 @@ public class FoodItemSearchService {
 
     return foodItemRepository.findAllById(itemIds);
   }
+
+  public void deleteFromIndex(Long id) {
+    elasticsearchRepository.deleteById(id.toString());
+  }
 }

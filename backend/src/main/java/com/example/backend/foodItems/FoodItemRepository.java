@@ -1,6 +1,8 @@
 package com.example.backend.foodItems;
 
 import jakarta.transaction.Transactional;
+
+import java.util.Date;
 import java.util.List;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
@@ -26,7 +28,7 @@ public interface FoodItemRepository extends JpaRepository<FoodItems, Long> {
     "   :distance * 1000" +
     ")",
     nativeQuery = true
-)
+  )
   List<FoodItems> findItemsWithinDistance(
     @Param("lat") double lat,
     @Param("lng") double lng,
@@ -54,4 +56,14 @@ public interface FoodItemRepository extends JpaRepository<FoodItems, Long> {
   @Transactional
   @Query("DELETE FROM FoodItems f WHERE f.id = :id AND f.quantity = 0")
   int deleteIfZeroQuantity(@Param("id") Long id);
+
+  @Query("SELECT f FROM FoodItems f WHERE f.expiryDate < :currentDate")
+  List<FoodItems> findByExpiryDateBefore(
+    @Param("currentDate") Date currentDate
+  );
+
+  @Modifying
+  @Transactional
+  @Query("DELETE FROM FoodItems f WHERE f.expiryDate < :currentDate")
+  void deleteByExpiryDateBefore(@Param("currentDate") Date currentDate);
 }
