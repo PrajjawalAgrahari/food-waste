@@ -39,6 +39,13 @@ const RecipientPage: React.FC<RecipientPageProps> = ({ onLogout }) => {
     lng: number;
   } | null>(null);
 
+  const [suggestions, setSuggestions] = useState<string[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [typingTimeout, setTypingTimeout] = useState<NodeJS.Timeout | null>(
+    null
+  );
+  const [didYouMean, setDidYouMean] = useState<string | null>(null);
+
   // New states for request functionality
   const [requestModalOpen, setRequestModalOpen] = useState<boolean>(false);
   const [selectedItem, setSelectedItem] = useState<FoodItem | null>(null);
@@ -50,7 +57,32 @@ const RecipientPage: React.FC<RecipientPageProps> = ({ onLogout }) => {
       try {
         setLoading(true);
         let response;
-        if (distanceFilter && userLocation) {
+
+        // If any filter is active, use the combined search endpoint
+        if (searchTerm.trim() || filterExpiringSoon || filterByDonorId) {
+          response = await axios.get(
+            `http://localhost:8080/api/items/combined-search`,
+            {
+              params: {
+                query: searchTerm.trim() || null,
+                expiringSoon: filterExpiringSoon,
+                donorId: filterByDonorId,
+              },
+            }
+          );
+
+          // If search term exists but no results, suggest fuzzy search
+          if (
+            searchTerm.trim() &&
+            Array.isArray(response.data) &&
+            response.data.length === 0
+          ) {
+            setDidYouMean(searchTerm);
+          } else {
+            setDidYouMean(null);
+          }
+        } else if (distanceFilter && userLocation) {
+          // Use nearby endpoint with distance filter
           response = await axios.get(`http://localhost:8080/api/items/nearby`, {
             params: {
               lat: userLocation.lat,
@@ -58,11 +90,13 @@ const RecipientPage: React.FC<RecipientPageProps> = ({ onLogout }) => {
               distance: distanceFilter,
             },
           });
+          setDidYouMean(null);
         } else {
-          response = await axios.get<FoodItem[]>(
-            "http://localhost:8080/api/items"
-          );
+          // Use regular endpoint
+          response = await axios.get("http://localhost:8080/api/items");
+          setDidYouMean(null);
         }
+
         console.log("API response:", response.data);
         setFoodItems(Array.isArray(response.data) ? response.data : []);
         setError(null);
@@ -74,8 +108,19 @@ const RecipientPage: React.FC<RecipientPageProps> = ({ onLogout }) => {
       }
     };
 
-    fetchFoodItems();
-  }, [distanceFilter, userLocation]);
+    // Use debounce for search to avoid too many API calls
+    const timeoutId = setTimeout(() => {
+      fetchFoodItems();
+    }, 500); // 500ms debounce
+
+    return () => clearTimeout(timeoutId);
+  }, [
+    searchTerm,
+    filterExpiringSoon,
+    filterByDonorId,
+    distanceFilter,
+    userLocation,
+  ]);
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -92,40 +137,66 @@ const RecipientPage: React.FC<RecipientPageProps> = ({ onLogout }) => {
       );
     }
   }, []);
-  
 
-  // Filter items based on search term, expiry filter, and donor filter
-  const filteredItems = Array.isArray(foodItems)
-    ? foodItems.filter((item) => {
-        // Search filter
-        const matchesSearch =
-          item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          item.pickupLocation.toLowerCase().includes(searchTerm.toLowerCase());
-
-        // Expiring soon filter (items expiring within 3 days)
-        const matchesExpiry = filterExpiringSoon
-          ? (new Date(item.expiryDate).getTime() - new Date().getTime()) /
-              (1000 * 60 * 60 * 24) <=
-            3
-          : true;
-
-        // Donor filter
-        const matchesDonor = filterByDonorId
-          ? item.donorId === filterByDonorId
-          : true;
-
-        return matchesSearch && matchesExpiry && matchesDonor;
-      })
-    : [];
-
-  console.log("Filtered items:", filteredItems);
+  // Filter items based on expiry filter and donor filter
+  const filteredItems = Array.isArray(foodItems) ? foodItems : [];
 
   // Calculate pagination
   const pageCount = Math.ceil(filteredItems.length / itemsPerPage);
   const offset = currentPage * itemsPerPage;
   const currentItems = filteredItems.slice(offset, offset + itemsPerPage);
 
-  console.log(pageCount, offset, currentItems);
+  // console.log(pageCount, offset, currentItems);
+
+  // Fetch autocomplete suggestions
+  const fetchSuggestions = async (prefix: string) => {
+    if (!prefix || prefix.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+
+    try {
+      const response = await axios.get(
+        `http://localhost:8080/api/items/suggest`,
+        {
+          params: { prefix },
+        }
+      );
+      console.log("Suggestions response:", response);
+      setSuggestions(response.data);
+    } catch (error) {
+      console.error("Error fetching suggestions:", error);
+    }
+  };
+
+  // Handle fuzzy search when no results are found
+  const handleFuzzySearch = async () => {
+    try {
+      setLoading(true);
+      const response = await axios.get(
+        `http://localhost:8080/api/items/fuzzy-search`,
+        {
+          params: { query: searchTerm },
+        }
+      );
+
+      setFoodItems(Array.isArray(response.data) ? response.data : []);
+      setDidYouMean(null); // Clear "did you mean" once results are shown
+      setError(null);
+    } catch (err) {
+      setError("Failed to fetch food items. Please try again later.");
+      console.error("Error fetching food items:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Handle suggestion click
+  const handleSuggestionClick = (suggestion: string) => {
+    setSearchTerm(suggestion);
+    setShowSuggestions(false);
+    // Trigger search with the selected suggestion
+  };
 
   const handlePageChange = (selectedItem: { selected: number }) => {
     setCurrentPage(selectedItem.selected);
@@ -134,8 +205,22 @@ const RecipientPage: React.FC<RecipientPageProps> = ({ onLogout }) => {
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchTerm(e.target.value);
+    const value = e.target.value;
+    setSearchTerm(value);
     setCurrentPage(0); // Reset to first page when searching
+
+    // Clear any existing timeout
+    if (typingTimeout) {
+      clearTimeout(typingTimeout);
+    }
+
+    // Set a new timeout for suggestions
+    const timeout = setTimeout(() => {
+      fetchSuggestions(value);
+    }, 200); // 200ms delay for suggestions
+
+    setTypingTimeout(timeout);
+    setShowSuggestions(true);
   };
 
   const handleExpiryFilterChange = () => {
@@ -257,9 +342,50 @@ const RecipientPage: React.FC<RecipientPageProps> = ({ onLogout }) => {
               placeholder="Search by name or location..."
               value={searchTerm}
               onChange={handleSearchChange}
+              onBlur={() => {
+                // Delay hiding suggestions to allow for clicks
+                setTimeout(() => setShowSuggestions(false), 200);
+              }}
+              onFocus={() => {
+                if (searchTerm.length >= 2) {
+                  setShowSuggestions(true);
+                }
+              }}
               className="w-full px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+
+            {/* Autocomplete suggestions */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute z-10 w-full bg-white border border-gray-300 rounded-md shadow-lg mt-1">
+                {suggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    className="px-4 py-2 hover:bg-blue-50 cursor-pointer"
+                    onMouseDown={() => handleSuggestionClick(suggestion)}
+                  >
+                    {suggestion}
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* "Did you mean?" section */}
+            {!loading &&
+              !error &&
+              filteredItems.length === 0 &&
+              searchTerm.trim() !== "" && (
+                <div className="mt-2 text-sm">
+                  <p>No exact matches found. Try with fuzzy search?</p>
+                  <button
+                    onClick={handleFuzzySearch}
+                    className="text-blue-600 hover:text-blue-800 underline"
+                  >
+                    Search for similar items to "{searchTerm}"
+                  </button>
+                </div>
+              )}
           </div>
+
           <div className="flex items-center space-x-4">
             {/* View Toggle Switch */}
             <div className="flex items-center">

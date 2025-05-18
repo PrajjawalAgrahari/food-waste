@@ -12,27 +12,38 @@ public class FoodItemService {
 
     private final UserRepository userRepository;
     private final EmailNotificationService emailNotificationService;
+    private final FoodItemSearchService searchService;
 
-    public FoodItemService(UserRepository userRepository, EmailNotificationService emailNotificationService) {
+    public FoodItemService(
+            UserRepository userRepository, 
+            EmailNotificationService emailNotificationService,
+            FoodItemSearchService searchService) {
         this.emailNotificationService = emailNotificationService;
         this.userRepository = userRepository;
+        this.searchService = searchService;
     }
+
     public void sendNotifications(FoodItems[] foodItems) {
+        // Your existing notification logic
         FoodItems foodItem = foodItems[0];
         double lat1 = foodItem.getPickupLatitude().doubleValue();
         double lon1 = foodItem.getPickupLongitude().doubleValue();
-
         List<User> users = userRepository.findByRole("RECEIVER");
-
+        
         // Create a message with all the food items
         StringBuilder message = new StringBuilder("Available food items:\n");
         for (FoodItems item : foodItems) {
             message.append(item.getName()).append("\n");
+            
+            // Index the food item in Elasticsearch
+            searchService.indexFoodItem(item);
         }
+        
+        // Rest of your notification code
         message.append("Pickup location: ").append(lat1).append(", ").append(lon1).append("\n");
         message.append("Distance: 5 km\n");
         message.append("Please respond if you are interested.");
-
+        
         for (User user : users) {
             double lat2 = user.getHomeLat().doubleValue();
             double lon2 = user.getHomeLon().doubleValue();

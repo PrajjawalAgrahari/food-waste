@@ -9,13 +9,16 @@ public class FoodItemController {
 
   private final FoodItemRepository foodItemRepository;
   private final FoodItemService foodItemService;
+  private final FoodItemSearchService searchService;
 
   public FoodItemController(
     FoodItemRepository foodItemRepository,
-    FoodItemService foodItemService
+    FoodItemService foodItemService,
+    FoodItemSearchService searchService
   ) {
     this.foodItemService = foodItemService;
     this.foodItemRepository = foodItemRepository;
+    this.searchService = searchService;
   }
 
   @PostMapping("/add-items")
@@ -43,5 +46,36 @@ public class FoodItemController {
   @GetMapping("/items/{id}")
   public List<FoodItems> getItemByDonorId(@PathVariable Long id) {
     return foodItemRepository.findByDonorId(id);
+  }
+
+  @GetMapping("/items/combined-search")
+  public List<FoodItems> searchWithCombinedFilters(
+    @RequestParam(required = false) String query,
+    @RequestParam(
+      required = false,
+      defaultValue = "false"
+    ) boolean expiringSoon,
+    @RequestParam(required = false) Long donorId
+  ) {
+    return searchService.searchWithCombinedFilters(
+      query,
+      expiringSoon,
+      donorId
+    );
+  }
+
+  @GetMapping("/items/suggest")
+  public List<String> getSuggestions(@RequestParam String prefix) {
+    return searchService.getSuggestions(prefix);
+  }
+
+  @GetMapping("/items/fuzzy-search")
+  public List<FoodItems> fuzzySearch(@RequestParam String query) {
+    return searchService.searchWithFuzzy(query);
+  }
+
+  @PostMapping("/items/index")
+  public void indexAllItems() {
+    searchService.indexAllFoodItems();
   }
 }
