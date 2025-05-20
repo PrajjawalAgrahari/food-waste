@@ -2,6 +2,7 @@ package com.example.backend.users;
 
 import com.example.backend.security.JwtTokenProvider;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.HashMap;
 import java.util.Map;
 import org.springframework.http.HttpStatus;
@@ -46,6 +47,8 @@ public class AuthController {
     try {
       // Set creation time
       user.setCreatedAt(LocalDateTime.now());
+      user.setAvailabilityTimeFrom(LocalTime.parse("09:00:00"));
+      user.setAvailabilityTimeTo(LocalTime.parse("17:00:00"));
       // Register user (this will hash the password)
       userService.register(user);
 
