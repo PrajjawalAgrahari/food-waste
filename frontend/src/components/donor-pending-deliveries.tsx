@@ -35,7 +35,11 @@ function DonorPendingDeliveries({ onLogout }: { onLogout: () => void }): JSX.Ele
     const fetchPendingDeliveries = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:8080/api/pickup-requests/donor/${donorId}`);
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const response = await axios.get(`http://localhost:8080/api/pickup-requests/donor/${donorId}`, {
+          headers,
+        });
         // Only keep PENDING or CONFIRMED
         const pendingRequests = response.data.requests.filter((req: PickupRequest) =>
           req.status === 'PENDING' || req.status === 'CONFIRMED'
@@ -61,7 +65,11 @@ function DonorPendingDeliveries({ onLogout }: { onLogout: () => void }): JSX.Ele
   // Handle marking an entire delivery as delivered/cancelled
   const handleUpdateDeliveryStatus = async (deliveryNumber: string, status: string) => {
     try {
-      await axios.patch(`http://localhost:8080/api/pickup-requests/delivery-number/${deliveryNumber}/status`, {status});
+      const token = localStorage.getItem("token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
+      await axios.patch(`http://localhost:8080/api/pickup-requests/delivery-number/${deliveryNumber}/status`, {status}, {
+        headers,
+      });
       // Remove this delivery group from the UI
       setGroupedDeliveries(prev =>
         Object.fromEntries(Object.entries(prev).filter(([num]) => num !== deliveryNumber))

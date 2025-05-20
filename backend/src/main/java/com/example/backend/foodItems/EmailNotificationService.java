@@ -24,7 +24,7 @@ public class EmailNotificationService {
         message.setSubject(subject);
         message.setText(text);
         // Optionally set from:
-        // message.setFrom("no-reply@yourdomain.com");
+        message.setFrom("no-reply@foodwaste.com");
         mailSender.send(message);
     }
 }

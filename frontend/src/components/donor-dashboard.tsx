@@ -34,9 +34,13 @@ function DonorDashboard({ onLogout }: { onLogout: () => void }): JSX.Element {
     const fetchDonorData = async () => {
       try {
         setLoading(true);
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
         // Fetch food items
         const itemsResponse = await axios.get(
-          `http://localhost:8080/api/items/${donorId}`
+          `http://localhost:8080/api/items/${donorId}`, {
+            headers,
+          }
         );
         setFoodItems(
           Array.isArray(itemsResponse.data) ? itemsResponse.data : []
@@ -44,7 +48,9 @@ function DonorDashboard({ onLogout }: { onLogout: () => void }): JSX.Element {
 
         // Fetch user profile to get availability times
         const userResponse = await axios.get(
-          `http://localhost:8080/api/users/${donorId}`
+          `http://localhost:8080/api/users/${donorId}`, {
+            headers,
+          }
         );
         if (userResponse.data) {
           setAvailabilityTimeFrom(
@@ -76,6 +82,8 @@ function DonorDashboard({ onLogout }: { onLogout: () => void }): JSX.Element {
 
     setIsUpdating(true);
     try {
+      const token = localStorage.getItem("token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
       console.log("Updating availability time:", {
         availabilityTimeFrom,
         availabilityTimeTo,
@@ -85,6 +93,9 @@ function DonorDashboard({ onLogout }: { onLogout: () => void }): JSX.Element {
         {
           availabilityTimeFrom,
           availabilityTimeTo,
+        },
+        {
+          headers
         }
       );
       setUpdateSuccess("Your availability time has been updated successfully!");

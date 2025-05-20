@@ -58,6 +58,9 @@ const RecipientPage: React.FC<RecipientPageProps> = ({ onLogout }) => {
         setLoading(true);
         let response;
 
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+
         // If any filter is active, use the combined search endpoint
         if (searchTerm.trim() || filterExpiringSoon || filterByDonorId) {
           response = await axios.get(
@@ -68,6 +71,7 @@ const RecipientPage: React.FC<RecipientPageProps> = ({ onLogout }) => {
                 expiringSoon: filterExpiringSoon,
                 donorId: filterByDonorId,
               },
+              headers: headers,
             }
           );
 
@@ -89,11 +93,14 @@ const RecipientPage: React.FC<RecipientPageProps> = ({ onLogout }) => {
               lng: userLocation.lng,
               distance: distanceFilter,
             },
+            headers: headers,
           });
           setDidYouMean(null);
         } else {
           // Use regular endpoint
-          response = await axios.get("http://localhost:8080/api/items");
+          response = await axios.get("http://localhost:8080/api/items", {
+            headers: headers,
+          });
           setDidYouMean(null);
         }
 

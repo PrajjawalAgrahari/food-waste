@@ -68,8 +68,12 @@ const CheckoutPage: React.FC = () => {
   // Fetch donor availability
   const fetchDonorAvailability = async (donorId: number) => {
     try {
+      const token = localStorage.getItem("token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
       const response = await axios.get(
-        `http://localhost:8080/api/users/${donorId}`
+        `http://localhost:8080/api/users/${donorId}`, {
+          headers,
+        }
       );
       if (response.data) {
         setDonorAvailability({
@@ -143,6 +147,8 @@ const CheckoutPage: React.FC = () => {
   const handleSubmitCheckout = async () => {
     try {
       setLoading(true);
+      const token = localStorage.getItem("token");
+      const headers = token ? { Authorization: `Bearer ${token}` } : {};
 
       // Create pickup request object
       const pickupRequest = {
@@ -161,7 +167,9 @@ const CheckoutPage: React.FC = () => {
       // Send request to backend
       const response = await axios.post(
         "http://localhost:8080/api/pickup-requests",
-        pickupRequest
+        pickupRequest, {
+          headers,
+        }
       );
 
       if (response.status === 200 || response.status === 201) {

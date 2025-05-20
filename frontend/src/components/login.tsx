@@ -52,10 +52,14 @@ const Login: React.FC<LoginProps> = ({ setToken, setUserRole }) => {
         setUserRole(response.data.role);
 
         // Redirect based on role
-        if (response.data.role === "DONOR") {
+        if (role === "DONOR") {
           navigate("/donor");
-        } else if (response.data.role === "RECEIVER") {
+        } else if (role === "RECEIVER") {
+          console.log("Receiver role detected");
           navigate("/receiver");
+        }
+        else if (role === "ADMIN") {
+          navigate("/admin");
         }
       } else {
         setError("Login failed. Please check your credentials.");
@@ -143,7 +147,7 @@ const Login: React.FC<LoginProps> = ({ setToken, setUserRole }) => {
                 className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-                // disabled={role !== ""}
+                disabled={role !== ""}
                 required
               >
                 <option value="">Select role</option>

@@ -49,7 +49,7 @@ public class FoodItemService {
             double lon2 = user.getHomeLon().doubleValue();
             double distance = GeoUtils.distanceKm(lat1, lon1, lat2, lon2);
             if (distance <= 5) {
-                emailNotificationService.sendSimpleMessage("agrahariprajjawal5@gmail.com", "Food Item Available", message.toString());
+                emailNotificationService.sendSimpleMessage(user.getEmail(), "Food Item Available", message.toString());
             }
         }
     }

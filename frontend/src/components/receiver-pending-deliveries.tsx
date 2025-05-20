@@ -35,7 +35,11 @@ function ReceiverPendingDeliveries({ onLogout }: { onLogout: () => void }): JSX.
     const fetchPendingDeliveries = async () => {
       try {
         setLoading(true);
-        const response = await axios.get(`http://localhost:8080/api/pickup-requests/receiver/${receiverId}`);
+        const token = localStorage.getItem("token");
+        const headers = token ? { Authorization: `Bearer ${token}` } : {};
+        const response = await axios.get(`http://localhost:8080/api/pickup-requests/receiver/${receiverId}`, {
+          headers,
+        });
         console.log('Pending deliveries response:', response.data);
         
         // Only keep PENDING or CONFIRMED statuses

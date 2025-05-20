@@ -165,8 +165,12 @@ function Donor({ onLogout }: { onLogout(): void }): JSX.Element {
     setIsSubmitting(true);
 
     try {
-      console.log(formattedItems);
-      await axios.post("http://localhost:8080/api/add-items", formattedItems);
+      const token = localStorage.getItem("token");
+      await axios.post("http://localhost:8080/api/add-items", formattedItems, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
       setSuccessMessage("Food items added successfully!");
       setFoodItems([
         {
