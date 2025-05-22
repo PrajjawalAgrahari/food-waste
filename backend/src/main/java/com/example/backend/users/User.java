@@ -42,6 +42,12 @@ public class User {
   @Column(name = "availability_time_to")
   private LocalTime availabilityTimeTo;
 
+  @Column(name = "upi_id")
+  private String upiId;
+
+  @Column(name = "payment_qr_code_url")
+  private String paymentQrCodeUrl;
+
   // Constructors
   public User() {}
 
@@ -141,4 +147,20 @@ public class User {
   public void setAvailabilityTimeTo(LocalTime availabilityTimeTo) {
     this.availabilityTimeTo = availabilityTimeTo;
   }
+
+    public String getUpiId() {
+        return upiId;
+    }
+
+    public void setUpiId(String upiId) {
+        this.upiId = upiId;
+    }
+
+    public String getPaymentQrCodeUrl() {
+        return paymentQrCodeUrl;
+    }
+
+    public void setPaymentQrCodeUrl(String paymentQrCodeUrl) {
+        this.paymentQrCodeUrl = paymentQrCodeUrl;
+    }
 }

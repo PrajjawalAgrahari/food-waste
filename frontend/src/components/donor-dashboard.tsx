@@ -1,7 +1,7 @@
 import { useState, useEffect, JSX } from "react";
 import axios from "axios";
 import { format } from "date-fns";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 interface FoodItem {
   id: number;
@@ -38,7 +38,8 @@ function DonorDashboard({ onLogout }: { onLogout: () => void }): JSX.Element {
         const headers = token ? { Authorization: `Bearer ${token}` } : {};
         // Fetch food items
         const itemsResponse = await axios.get(
-          `http://localhost:8080/api/items/${donorId}`, {
+          `http://localhost:8080/api/items/${donorId}`,
+          {
             headers,
           }
         );
@@ -48,7 +49,8 @@ function DonorDashboard({ onLogout }: { onLogout: () => void }): JSX.Element {
 
         // Fetch user profile to get availability times
         const userResponse = await axios.get(
-          `http://localhost:8080/api/users/${donorId}`, {
+          `http://localhost:8080/api/users/${donorId}`,
+          {
             headers,
           }
         );
@@ -95,7 +97,7 @@ function DonorDashboard({ onLogout }: { onLogout: () => void }): JSX.Element {
           availabilityTimeTo,
         },
         {
-          headers
+          headers,
         }
       );
       setUpdateSuccess("Your availability time has been updated successfully!");
@@ -112,6 +114,12 @@ function DonorDashboard({ onLogout }: { onLogout: () => void }): JSX.Element {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-blue-700">Donor Dashboard</h1>
         <div className="flex space-x-4">
+          <Link
+            to="/donor/profile"
+            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+          >
+            My Profile
+          </Link>
           <button
             onClick={() => navigate("/donor-pending-deliveries")}
             className="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700 transition"

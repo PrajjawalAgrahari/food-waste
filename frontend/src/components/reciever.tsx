@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import FoodItemCard, { FoodItem } from "./food-item-card";
 import Pagination from "./pagination";
 import RequestModal from "./request-modal";
@@ -318,6 +318,12 @@ const RecipientPage: React.FC<RecipientPageProps> = ({ onLogout }) => {
               Checkout ({cartItems.length})
             </button>
           )}
+          <Link
+            to="/donors"
+            className="bg-green-500 text-white px-4 py-2 rounded hover:bg-green-600"
+          >
+            Support Donors
+          </Link>
           <button
             onClick={onLogout}
             className="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition"

@@ -15,6 +15,9 @@ import CheckoutPage from "./components/checkout";
 import ConfirmationPage from "./components/confirmation";
 import DonorPendingDeliveries from "./components/donor-pending-deliveries";
 import ReceiverPendingDeliveries from "./components/receiver-pending-deliveries";
+import DonorProfile from "./components/donor-profile";
+import DonationPage from "./components/donation-page";
+import DonorList from "./components/donor-list";
 
 // Protected route component
 interface ProtectedRouteProps {
@@ -161,6 +164,44 @@ const App: React.FC = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/donor/profile"
+          element={
+            <ProtectedRoute
+              token={token}
+              userRole={userRole}
+              requiredRole="DONOR"
+            >
+              <DonorProfile />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/donors"
+          element={
+            <ProtectedRoute
+              token={token}
+              userRole={userRole}
+              requiredRole="RECEIVER"
+            >
+              <DonorList />
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/donate/:donorId"
+          element={
+            <ProtectedRoute
+              token={token}
+              userRole={userRole}
+              requiredRole="RECEIVER"
+            >
+              <DonationPage />
+            </ProtectedRoute>
+          }
+        ></Route>
       </Routes>
     </Router>
   );
